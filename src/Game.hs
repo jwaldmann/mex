@@ -127,7 +127,7 @@ continue_round (s : ss) (echt, ansage) = do
 
 --------------------------------------------------------------------
 
-logging = True
+logging = False
 
 logged0 s cmd = do
     let Callback c = callback s

@@ -9,7 +9,7 @@ import Registrar
 import Logger
 
 
-import qualified Network.Wai.Handler.Warp
+import Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
 import Network.Wai
 
@@ -39,7 +39,10 @@ main = do
     
     forkIO $ forever $ game server
 
-    Network.Wai.Handler.Warp.run ( read port ) $ \ req -> case pathInfo req of
+    Network.Wai.Handler.Warp.runSettings 
+      ( defaultSettings { settingsTimeout = 1
+                        , settingsPort = read port } 
+      ) $ \ req -> case pathInfo req of
       [ "rpc" ] -> registrar passwd_map ( registry server ) req
       [ "log" ] -> logger (bank server) ( registry server) req
       _         -> return 

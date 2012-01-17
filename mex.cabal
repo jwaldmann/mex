@@ -1,0 +1,31 @@
+Name:                mex
+Version:             0.1
+-- Synopsis:            
+-- Description:         
+Homepage:            https://github.com/jwaldmann/mex
+License:             GPL-3
+License-file:        COPYING
+Author:              Johannes Waldmann
+Maintainer:          waldmann@imn.htwk-leipzig.de
+Category:            Game
+Build-type:          Simple
+Extra-source-files:  README
+Cabal-version:       >=1.2
+
+Executable mex-server
+  Hs-source-dirs : src
+  Main-is : Server.hs
+  Build-depends : 
+    base, containers, stm, pretty, datetime,
+    bytestring, transformers, mtl, time, random,
+    smallcheck==0.5,
+    haxr >= 3000.8.4, cgi >= 3001.1.8.2,
+    wai>=1.0.0, http-types>= 0.6.8, warp >= 1.0.0,
+    wai-frontend-monadcgi>=0.2.0
+  
+Executable mex-client
+  Hs-source-dirs : src
+  Main-is : Client.hs
+  Build-depends : base
+
+  
