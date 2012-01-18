@@ -35,7 +35,10 @@ main = do
     
     re <- atomically $ newTVar M.empty
     ba <- atomically $ newTVar M.empty
-    let server = Server { registry = re, bank = ba }
+    os <- atomically $ newTVar []
+    let server = Server { registry = re, bank = ba 
+                        , offenders = os 
+                        }
     
     forkIO $ forever $ game server
 

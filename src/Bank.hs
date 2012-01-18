@@ -14,11 +14,10 @@ instance Num Konto where
 
 type Bank = M.Map Name Konto
 
-update :: [ Name ] -> (Name, Int) -> Bank -> Bank
-update ns (n, delta) previous = 
-      M.insertWith (+) n ( Konto { played = 0, points = delta } )
-    $ M.unionWith (+) previous
-    $ M.fromList ( zip ns $ repeat $ Konto { played = 1, points = 0 } )
+update :: (Name, Int, Int) -> Bank -> Bank
+update (n, pl, pt) previous = 
+      M.insertWith (+) n ( Konto { played = pl, points = pt } )
+    $ previous
 
 pretty :: Bank -> Doc
 pretty b = text "statistics:" <+> vcat 

@@ -3,6 +3,8 @@
 
 module Game where
 
+import Prelude hiding ( catch )
+
 import Spieler
 import Wurf
 import Bank
@@ -32,6 +34,7 @@ instance Exception TimeoutE
 
 data Server = Server { registry  :: TVar Registry
                  , bank      :: TVar Bank
+                 , offenders :: TVar [ Spieler ]  
                  }
 
 second = 10^ 6
@@ -44,10 +47,6 @@ timed to action = do
         Nothing -> throwIO TimeoutE
         Just res -> return res
 
-remove :: Server -> Spieler -> IO ()
-remove server s = atomically $ do 
-    m <- readTVar $ registry server
-    writeTVar ( registry server ) $ M.delete ( name s ) m
 
 -- | choose a subset of players (with at least two)
 -- have them play a game, record the result
@@ -56,16 +55,30 @@ game server = void $ do
 
     xs <- select_players server
 
-    result <- Control.Exception.catch ( fmap Right $ play_game server xs ) 
-        $ \ ( ProtocolE s ) -> return $ Left s
-
-    atomically $ do            
-        m <- readTVar $ bank server
-        writeTVar ( bank server ) $ Bank.update ( map name xs ) 
-                       ( case result of 
-                            Right p -> ( name p ,  1 )
-                            Left  p -> ( name p , -1 )
-                       ) m
+    Control.Exception.catch ( do 
+        winner <- play_game server xs 
+        atomically $ do            
+            m <- readTVar $ bank server
+            let m' = foldr Bank.update m
+                   $ (name winner, 0, 1 ) 
+                   : zip3 (map name xs) 
+                          (repeat 1) (repeat 0)
+            writeTVar ( bank server ) m'
+      ) $ \ ( e :: SomeException ) -> do
+        atomically $ do 
+            os <- readTVar $ offenders server
+            m <- readTVar $ bank server
+            let m' = foldr Bank.update m
+                   $ zip3 (map name os) 
+                          (repeat 0) (repeat $ negate 1 )
+            writeTVar ( bank server ) m'       
+            writeTVar ( offenders server ) []
+            
+            r <- readTVar $ registry server
+            writeTVar ( registry server ) 
+                $ M.difference r
+                $ M.fromList $ zip (map name os) 
+                             $ repeat ()
 
 select_players server = do
     xs <- atomically $ do
@@ -89,22 +102,23 @@ permute xs = do
 -- | Resultat: der Gewinner (alle anderen sind raus)
 play_game :: Server -> [ Spieler ] -> IO Spieler
 play_game server ys = bracket_
-    ( forM ys $ \ y -> logged0 y "begin_game" :: IO () )
-    ( forM ys $ \ y -> logged0 y "end_game"   :: IO () ) $ do
-        continue_game ys
+    ( forM ys $ \ y -> ignore_errors server $ logged0 y "begin_game" :: IO () )
+    ( forM ys $ \ y -> ignore_errors server $ logged0 y "end_game"   :: IO () ) $ do
+        continue_game server ys
 
-continue_game ys = case ys of
+continue_game server ys = case ys of
     [] -> error "play_game []"
     [winner] -> return winner
     _ -> do 
-        ( loser, rest )  <- play_round ys
-        continue_game rest
+        ( loser, rest )  <- play_round server ys
+        continue_game server rest
         
 -- | Resultat: der Verlierer und der Rest (der weiterspielen darf)
-play_round :: [ Spieler ] ->  IO (Spieler, [Spieler])
-play_round (s : ss) = bracket_
-    ( forM (s:ss) $ \ y -> logged0 y "begin_round" :: IO () )
-    ( forM (s:ss) $ \ y -> logged0 y "end_round"   :: IO () ) $ do
+play_round :: Server 
+           -> [ Spieler ] ->  IO (Spieler, [Spieler])
+play_round server (s : ss) = bracket_
+    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "begin_round" :: IO () )
+    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "end_round"   :: IO () ) $ do
         w <- roll
         w' <- logged1 s "say" w
         (loser, rest) <- continue_round (ss ++ [s]) (w, w')
@@ -127,6 +141,14 @@ continue_round (s : ss) (echt, ansage) = do
 
 --------------------------------------------------------------------
 
+ignore_errors server action = 
+    catch action $ \ ( ProtocolE s ) -> do
+        hPutStrLn stderr $ unwords [ "offender", show $ name s ]
+        atomically $ do
+            os <- readTVar $ offenders server
+            writeTVar ( offenders server ) $ s : os
+        return ()    
+            
 logging = False
 
 logged0 s cmd = do
