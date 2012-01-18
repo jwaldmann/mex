@@ -1,0 +1,24 @@
+Server and example Client for "mex" game,
+used for student projects in software engineering,
+
+http://www.imn.htwk-leipzig.de/~waldmann/edu/ws11/st/folien/main/node79.html
+
+(c) Johannes Waldmann, 2012
+
+See INSTALL for instructions. --- Example usage:
+
+# start the server in the background,
+# arguments: port number, passwd file name
+mex-server 2012 passwd &
+
+# start one client,  arguments: 
+# user name, password, client port, server URL
+mex-client A A 3000 http://localhost:2012/rpc &
+
+# start another client (use different name and port)
+mex-client B B 3001 http://localhost:2012/rpc &
+
+# then the server will start games.
+# watch system state at  http://localhost:2012/log
+
+

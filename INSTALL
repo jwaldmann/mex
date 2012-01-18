@@ -1,0 +1,27 @@
+Prerequisites:
+
+Haskell compiler: ghc  http://www.haskell.org/ghc/
+
+Haskell platform: http://hackage.haskell.org/platform/
+   you don't need the full platform.
+   cabal-install can download and install extra packages
+      http://www.haskell.org/haskellwiki/Cabal-Install
+
+packages from the Yesod project (wai, warp): 
+   the exact names and versions are in the .cabal file.
+   currently (Jan 2012) you need to build from source,
+   but they should appear on hackage after a while
+   http://www.yesodweb.com/
+
+
+Build:
+
+   in theory, it is as simple as this:
+
+   cabal install
+
+   it will put executables  mex-server  and  mex-client
+   into /usr/local/bin  or whereever your .cabal/config
+   says they should go.
+
+

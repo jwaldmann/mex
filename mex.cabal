@@ -9,12 +9,13 @@ Author:              Johannes Waldmann
 Maintainer:          waldmann@imn.htwk-leipzig.de
 Category:            Game
 Build-type:          Simple
-Extra-source-files:  README
+Extra-source-files:  README, passwd
 Cabal-version:       >=1.2
 
 Executable mex-server
   Hs-source-dirs : src
   Main-is : Server.hs
+  Ghc-Options : -threaded
   Build-depends : 
     base, containers, stm, pretty, datetime,
     bytestring, transformers, mtl, time, random,
@@ -26,6 +27,7 @@ Executable mex-server
 Executable mex-client
   Hs-source-dirs : src
   Main-is : Client.hs
-  Build-depends : base
+  Ghc-Options : -threaded
+
 
   
