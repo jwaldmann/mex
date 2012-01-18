@@ -33,10 +33,14 @@ login :: M.Map Name Password -> TVar Registry -> Spieler -> IO Bool
 login passwd_map reg s = do  
     t <- getCurrentTime          
     hPutStrLn stderr $ unwords [ "login", show t, show s ]
-    let ok = Just ( password s ) == M.lookup ( name s ) passwd_map
-    when ok $ atomically $ do 
-        m <- readTVar reg
-        writeTVar reg $ M.insert ( name s ) s m
+    let password_ok = Just ( password s ) == M.lookup ( name s ) passwd_map
+    ok <- if not password_ok then return False else  atomically $ do 
+              m <- readTVar reg
+              if M.null $ M.filter ( \ t -> callback s == callback t ) m
+                  then do   
+                      writeTVar reg $ M.insert ( name s ) s m
+                      return True
+                  else return False
     hPutStrLn stderr $ unwords [ "login", show t, show s, show ok ]
     return ok
 
