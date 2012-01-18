@@ -46,13 +46,13 @@ play port prev
          outputFPS result
 
 server prev = methods 
-    [ ("begin_round", fun $ begin prev )
-    , ("end_round", fun $ end prev )
-    , ("begin_game", fun $ begin prev )
-    , ("end_game", fun $ end prev )
-    , ("accept", fun $ accept prev )
-    , ("other", fun $ ignore prev )
-    , ("say", fun $ say prev ) 
+    [ ("Player.begin_round", fun $ begin prev )
+    , ("Player.end_round", fun $ end prev )
+    , ("Player.begin_game", fun $ begin prev )
+    , ("Player.end_game", fun $ end prev )
+    , ("Player.accept", fun $ accept prev )
+    , ("Player.other", fun $ ignore prev )
+    , ("Player.say", fun $ say prev ) 
     ]
 
 begin :: TVar ( Maybe Wurf ) -> IO ()

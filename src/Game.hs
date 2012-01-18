@@ -102,8 +102,8 @@ permute xs = do
 -- | Resultat: der Gewinner (alle anderen sind raus)
 play_game :: Server -> [ Spieler ] -> IO Spieler
 play_game server ys = bracket_
-    ( forM ys $ \ y -> ignore_errors server $ logged0 y "begin_game" :: IO () )
-    ( forM ys $ \ y -> ignore_errors server $ logged0 y "end_game"   :: IO () ) $ do
+    ( forM ys $ \ y -> ignore_errors server $ logged0 y "Player.begin_game" :: IO () )
+    ( forM ys $ \ y -> ignore_errors server $ logged0 y "Player.end_game"   :: IO () ) $ do
         continue_game server ys
 
 continue_game server ys = case ys of
@@ -117,20 +117,20 @@ continue_game server ys = case ys of
 play_round :: Server 
            -> [ Spieler ] ->  IO (Spieler, [Spieler])
 play_round server (s : ss) = bracket_
-    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "begin_round" :: IO () )
-    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "end_round"   :: IO () ) $ do
+    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "Player.begin_round" :: IO () )
+    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "Player.end_round"   :: IO () ) $ do
         w <- roll
-        w' <- logged1 s "say" w
+        w' <- logged1 s "Player.say" w
         (loser, rest) <- continue_round (ss ++ [s]) (w, w')
         return (loser, rest)
     
 continue_round (s : ss) (echt, ansage) = do    
-    forM ss $ \ s' -> logged1 s' "other" ansage :: IO ()
-    a <- logged1 s "accept" ansage
+    forM ss $ \ s' -> logged1 s' "Player.other" ansage :: IO ()
+    a <- logged1 s "Player.accept" ansage
     if a 
        then do -- weiterspielen
          echt' <- Wurf.roll
-         ansage' <- logged1 s "say" echt'
+         ansage' <- logged1 s "Player.say" echt'
          if ansage' <= ansage 
              then return (s, ss) -- verloren
              else continue_round (ss ++ [s]) ( echt', ansage' )     
