@@ -15,7 +15,7 @@ Cabal-version:       >=1.2
 Executable mex-server
   Hs-source-dirs : src
   Main-is : Server.hs
-  Ghc-Options : -threaded
+  Ghc-Options : -threaded -rtsopts
   Build-depends : 
     base, containers, stm, pretty, datetime,
     bytestring, transformers, mtl, time, random,
@@ -27,7 +27,7 @@ Executable mex-server
 Executable mex-client
   Hs-source-dirs : src
   Main-is : Client.hs
-  Ghc-Options : -threaded
+  Ghc-Options : -threaded -rtsopts
 
 
   
