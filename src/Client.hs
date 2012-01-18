@@ -28,7 +28,7 @@ main  = do
     prev <- atomically $ newTVar Nothing
     forkIO $ do
         threadDelay $ 10^6
-        True <- remote server "login" $ Spieler 
+        True <- remote server "Server.login" $ Spieler 
               { name = Name n
               , password = Password p
               , callback = Callback $ "http://localhost:" ++ port
