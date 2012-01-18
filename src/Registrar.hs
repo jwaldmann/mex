@@ -27,7 +27,7 @@ registrar passwd_map registry =
          outputFPS result
 
 server passwd_map reg = methods 
-    [ ("login", fun $ login passwd_map reg ) ]
+    [ ("Server.login", fun $ login passwd_map reg ) ]
       
 login :: M.Map Name Password -> TVar Registry -> Spieler -> IO Bool
 login passwd_map reg s = do  
