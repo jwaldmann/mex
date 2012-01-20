@@ -7,6 +7,7 @@ import Prelude hiding ( catch )
 
 import Spieler
 import Wurf
+import State
 import Bank
 import Registrar
 import Void
@@ -32,10 +33,6 @@ instance Exception ProtocolE
 data TimeoutE = TimeoutE  deriving ( Show, Typeable )
 instance Exception TimeoutE
 
-data Server = Server { registry  :: TVar Registry
-                 , bank      :: TVar Bank
-                 , offenders :: TVar [ Spieler ]  
-                 }
 
 second = 10^ 6
 timeout = 10 * second

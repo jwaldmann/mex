@@ -7,7 +7,7 @@ import Game
 import Bank
 import Registrar
 import Logger
-
+import State
 
 import Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
@@ -33,21 +33,15 @@ main = do
             l <- lines passwd ; [ n, p ] <- return $ words l 
             return ( Name n, Password p )
     
-    re <- atomically $ newTVar M.empty
-    ba <- atomically $ newTVar M.empty
-    os <- atomically $ newTVar []
-    let server = Server { registry = re, bank = ba 
-                        , offenders = os 
-                        }
-    
+    server <- State.make
     forkIO $ forever $ game server
 
     Network.Wai.Handler.Warp.runSettings 
       ( defaultSettings { settingsTimeout = 1
                         , settingsPort = read port } 
       ) $ \ req -> case pathInfo req of
-      [ "rpc" ] -> registrar passwd_map ( registry server ) req
-      [ "log" ] -> logger (bank server) ( registry server) req
+      [ "rpc" ] -> registrar passwd_map server req
+      [ "log" ] -> logger server req
       _         -> return 
             $ responseLBS statusOK [("Content-Type", "text/plain")] 
             $ "the server is here, but the service url is wrong"

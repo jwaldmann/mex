@@ -4,6 +4,7 @@ module Logger where
 
 import Bank 
 import Registrar
+import State
 
 import qualified Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
@@ -14,9 +15,9 @@ import Data.DateTime
 import Text.PrettyPrint.HughesPJ
 import Control.Concurrent.STM
 
-logger bank registry = \ req -> do
-     b <- liftIO $ atomically $ readTVar bank
-     r <- liftIO $ atomically $ readTVar registry
+logger state = \ req -> do
+     b <- liftIO $ atomically $ readTVar $ bank state
+     r <- liftIO $ atomically $ readTVar $ registry state
      t <- liftIO $ getCurrentTime
      let dash = text $ replicate 50 '-'
      return $ responseLBS statusOK [("Content-Type", "text/plain")] 

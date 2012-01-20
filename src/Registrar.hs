@@ -1,6 +1,7 @@
 module Registrar where
 
 import Spieler
+import State
 
 import qualified Network.Wai.Frontend.MonadCGI
 
@@ -13,27 +14,26 @@ import qualified Data.Map as M
 import Data.Time
 import Text.PrettyPrint.HughesPJ
 
-type Registry = M.Map Name Spieler
-
 pretty :: Registry -> Doc
 pretty reg = text "currently logged in:" <+> vcat (
     do ( k, v ) <- M.toList reg
        return $ text ( show k ) <+> text ( show $ callback v ) )
 
-registrar passwd_map registry = 
+registrar passwd_map state = 
     Network.Wai.Frontend.MonadCGI.cgiToApp $ do
          input <- getBody
-         result <- liftIO $ handleCall ( server passwd_map registry ) input
+         result <- liftIO $ handleCall ( server passwd_map state ) input
          outputFPS result
 
-server passwd_map reg = methods 
-    [ ("Server.login", fun $ login passwd_map reg ) ]
+server passwd_map state = methods 
+    [ ("Server.login", fun $ login passwd_map state ) ]
       
-login :: M.Map Name Password -> TVar Registry -> Spieler -> IO Bool
-login passwd_map reg s = do  
+login :: M.Map Name Password -> Server -> Spieler -> IO Bool
+login passwd_map state s = do  
     t <- getCurrentTime          
     hPutStrLn stderr $ unwords [ "login", show t, show s ]
     let password_ok = Just ( password s ) == M.lookup ( name s ) passwd_map
+    let reg = registry state    
     ok <- if not password_ok then return False else  atomically $ do 
               m <- readTVar reg
               if M.null $ M.filter ( \ t -> callback s == callback t ) m
