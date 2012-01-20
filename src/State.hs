@@ -30,7 +30,8 @@ data Server = Server { registry  :: TVar Registry
 pretty :: [ (UTCTime, Message) ] -> Doc
 pretty ums = text "most recent actions:" $$ nest 4 ( vcat $ do
     (u, m) <- ums
-    return $ text ( show m ) <+> text "   @ " <+> text ( show u )
+    let sized n s = s ++ replicate ( n - length s ) ' ' 
+    return $ text ( sized 60 $ show m ) <+> text ( show u )
   )  
 
 message :: Server -> Message -> IO ()
