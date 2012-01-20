@@ -53,7 +53,11 @@ game server = void $ do
     xs <- select_players server
 
     Control.Exception.catch ( do 
+                                 
+        message server $ Game xs
         winner <- play_game server xs 
+        message server $ Game_Won_By winner
+        
         atomically $ do            
             m <- readTVar $ bank server
             let m' = foldr Bank.update m
@@ -62,7 +66,7 @@ game server = void $ do
                           (repeat 1) (repeat 0)
             writeTVar ( bank server ) m'
       ) $ \ ( e :: SomeException ) -> do
-        atomically $ do 
+        os <- atomically $ do 
             os <- readTVar $ offenders server
             m <- readTVar $ bank server
             let m' = foldr Bank.update m
@@ -76,6 +80,8 @@ game server = void $ do
                 $ M.difference r
                 $ M.fromList $ zip (map name os) 
                              $ repeat ()
+            return os    
+        message server $ Protocol_Error_By os
 
 select_players server = do
     xs <- atomically $ do
@@ -99,8 +105,8 @@ permute xs = do
 -- | Resultat: der Gewinner (alle anderen sind raus)
 play_game :: Server -> [ Spieler ] -> IO Spieler
 play_game server ys = bracket_
-    ( forM ys $ \ y -> ignore_errors server $ logged0 y "Player.begin_game" :: IO () )
-    ( forM ys $ \ y -> ignore_errors server $ logged0 y "Player.end_game"   :: IO () ) $ do
+    ( forM ys $ \ y -> ignore_errors server $ logged0 server y "Player.begin_game" :: IO () )
+    ( forM ys $ \ y -> ignore_errors server $ logged0 server y "Player.end_game"   :: IO () ) $ do
         continue_game server ys
 
 continue_game server ys = case ys of
@@ -114,23 +120,25 @@ continue_game server ys = case ys of
 play_round :: Server 
            -> [ Spieler ] ->  IO (Spieler, [Spieler])
 play_round server (s : ss) = bracket_
-    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "Player.begin_round" :: IO () )
-    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 y "Player.end_round"   :: IO () ) $ do
+    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 server y "Player.begin_round" :: IO () )
+    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 server y "Player.end_round"   :: IO () ) $ do
+        message server $ Round (s:ss)
         w <- roll
-        w' <- logged1 s "Player.say" w
-        (loser, rest) <- continue_round (ss ++ [s]) (w, w')
+        w' <- logged1 server s "Player.say" w
+        (loser, rest) <- continue_round server (ss ++ [s]) (w, w')
+        message server $ Round_Lost_By loser
         return (loser, rest)
     
-continue_round (s : ss) (echt, ansage) = do    
-    forM ss $ \ s' -> logged1 s' "Player.other" ansage :: IO ()
-    a <- logged1 s "Player.accept" ansage
+continue_round server (s : ss) (echt, ansage) = do    
+    forM ss $ \ s' -> logged1 server s' "Player.other" ansage :: IO ()
+    a <- logged1 server s "Player.accept" ansage
     if a 
        then do -- weiterspielen
          echt' <- Wurf.roll
-         ansage' <- logged1 s "Player.say" echt'
+         ansage' <- logged1 server s "Player.say" echt'
          if ansage' <= ansage 
              then return (s, ss) -- verloren
-             else continue_round (ss ++ [s]) ( echt', ansage' )     
+             else continue_round server (ss ++ [s]) ( echt', ansage' )     
        else do -- aufdecken
          if echt >= ansage 
             then return ( s, ss )
@@ -148,22 +156,19 @@ ignore_errors server action =
             
 logging = False
 
-logged0 s cmd = do
+logged0 server s cmd = do
     let Callback c = callback s
-    res <- handle ( \ ( e :: SomeException ) -> throwIO $ ProtocolE s ) 
+    message server $ RPC_Call s cmd    
+    handle ( \ ( e :: SomeException ) -> throwIO $ ProtocolE s ) 
          $ timed timeout
          $ remote c cmd 
-    when logging $ hPutStrLn stderr 
-         $ unwords [ cmd, show $ name s, "=>", show res ]
-    return res
 
-logged1 s cmd arg = do
+logged1 server s cmd arg = do
+    message server $ RPC_Call s cmd    
     let Callback c = callback s
-    res <- handle ( \ ( e :: SomeException ) -> throwIO $ ProtocolE s ) 
+    handle ( \ ( e :: SomeException ) -> throwIO $ ProtocolE s ) 
          $ timed timeout $ remote c cmd arg
-    when logging $ hPutStrLn stderr 
-         $ unwords [ cmd, show $ name s, show arg, "=>", show res ]
-    return res
+
 
 
 

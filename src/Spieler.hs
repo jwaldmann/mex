@@ -15,7 +15,10 @@ data Spieler = Spieler
                , password :: Password
                , callback :: Callback
                }  
-   deriving ( Ord, Eq, Show )
+   deriving ( Ord, Eq )
+            
+instance Show Spieler where
+   show s = let Name n = name s in n
             
 instance XmlRpcType Spieler where
   getType s = TStruct

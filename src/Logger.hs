@@ -16,15 +16,17 @@ import Text.PrettyPrint.HughesPJ
 import Control.Concurrent.STM
 
 logger state = \ req -> do
+     t <- liftIO $ getCurrentTime
      b <- liftIO $ atomically $ readTVar $ bank state
      r <- liftIO $ atomically $ readTVar $ registry state
-     t <- liftIO $ getCurrentTime
+     ms <- liftIO $ atomically $ readTVar $ messages state
      let dash = text $ replicate 50 '-'
      return $ responseLBS statusOK [("Content-Type", "text/plain")] 
             $ C.pack $ show $ vcat 
             [ text $ show t , dash  
             , Bank.pretty b, dash 
             , Registrar.pretty r , dash
+            , State.pretty ms , dash                       
             , text "built with: warp, wai, conduit; see http://www.yesodweb.com/"
             ]
 

@@ -1,3 +1,5 @@
+{-# language DoAndIfThenElse #-}
+
 module Registrar where
 
 import Spieler
@@ -26,22 +28,44 @@ registrar passwd_map state =
          outputFPS result
 
 server passwd_map state = methods 
-    [ ("Server.login", fun $ login passwd_map state ) ]
-      
-login :: M.Map Name Password -> Server -> Spieler -> IO Bool
-login passwd_map state s = do  
-    t <- getCurrentTime          
-    hPutStrLn stderr $ unwords [ "login", show t, show s ]
+    [ ("Server.login", fun $ password_check passwd_map $ login state )
+    , ("Server.logout", fun $ password_check passwd_map $ logout state ) 
+    ]
+    
+password_check :: M.Map Name Password
+               -> ( Spieler -> IO Bool ) 
+               -> ( Spieler -> IO Bool )
+password_check passwd_map action s = do    
     let password_ok = Just ( password s ) == M.lookup ( name s ) passwd_map
-    let reg = registry state    
-    ok <- if not password_ok then return False else  atomically $ do 
-              m <- readTVar reg
-              if M.null $ M.filter ( \ t -> callback s == callback t ) m
-                  then do   
-                      writeTVar reg $ M.insert ( name s ) s m
+    if password_ok then action s else return False
+    
+login :: Server -> Spieler -> IO Bool
+login state s = do  
+    ok <- atomically $ do 
+              m <- readTVar $ registry state
+              let not_logged_in = not $ M.member ( name s ) m
+                  unique_callback = 
+                       M.null $ M.filter ( \ t -> callback s == callback t ) m
+                  ok = not_logged_in && unique_callback 
+              if ok 
+              then do   
+                      writeTVar ( registry state ) $ M.insert ( name s ) s m
                       return True
-                  else return False
-    hPutStrLn stderr $ unwords [ "login", show t, show s, show ok ]
+              else return False
+    message state $ Login s ok
+    return ok
+
+logout :: Server -> Spieler -> IO Bool
+logout state s = do  
+    ok <- atomically $ do 
+              m <- readTVar $ registry state
+              let logged_in = M.member ( name s ) m
+              if  logged_in
+              then do   
+                      writeTVar ( registry state ) $ M.delete ( name s ) m
+                      return True
+              else return False
+    message state $ Logout s ok
     return ok
 
     
