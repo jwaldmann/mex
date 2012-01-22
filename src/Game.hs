@@ -107,8 +107,8 @@ break_on_offense server = do
 -- | Resultat: der Gewinner (alle anderen sind raus)
 play_game :: Server -> [ Spieler ] -> IO Spieler
 play_game server ys = bracket_
-    ( forM ys $ \ y -> ignore_errors server $ logged0 server y "Player.begin_game" :: IO () )
-    ( forM ys $ \ y -> ignore_errors server $ logged0 server y "Player.end_game"   :: IO () ) $ do
+    ( forM ys $ \ y -> ignore_errors server ( logged0 server y "Player.begin_game" :: IO Bool ) )
+    ( forM ys $ \ y -> ignore_errors server ( logged0 server y "Player.end_game"   :: IO Bool ) ) $ do
         continue_game server ys
 
 continue_game server ys = case ys of
@@ -122,8 +122,8 @@ continue_game server ys = case ys of
 play_round :: Server 
            -> [ Spieler ] ->  IO (Spieler, [Spieler])
 play_round server (s : ss) = bracket_
-    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 server y "Player.begin_round" :: IO () )
-    ( forM (s:ss) $ \ y -> ignore_errors server $ logged0 server y "Player.end_round"   :: IO () ) $ do
+    ( forM (s:ss) $ \ y -> ignore_errors server ( logged0 server y "Player.begin_round" :: IO Bool ) )
+    ( forM (s:ss) $ \ y -> ignore_errors server ( logged0 server y "Player.end_round"   :: IO Bool ) ) $ do
         message server $ Round (s:ss)
         w <- roll
         w' <- logged1 server s "Player.say" w
@@ -152,7 +152,7 @@ continue_round server (s : ss) (echt, ansage) = do
 --------------------------------------------------------------------
 
 ignore_errors server action = 
-    catch action $ \ ( ProtocolE s ) -> do
+    catch ( void action ) $ \ ( ProtocolE s ) -> do
         hPutStrLn stderr $ unwords [ "offender", show $ name s ]
         atomically $ do
             os <- readTVar $ offenders server
