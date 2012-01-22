@@ -124,7 +124,7 @@ play_round server (s : ss) = bracket_
         return (loser, rest)
     
 continue_round server (s : ss) (echt, ansage) = do    
-  
+    message server $ Bid ansage  
     threadDelay $ 10^6
   
     forM ss $ \ s' -> ( logged1 server s' "Player.other" ansage :: IO Bool )

@@ -1,6 +1,7 @@
 module State where
 
 import Spieler
+import Wurf
 import Bank
 
 import Control.Concurrent.STM
@@ -10,9 +11,10 @@ import Text.PrettyPrint.HughesPJ
 
 data Message = Login Spieler Bool 
              | Callback_Mismatch Spieler Name
-             | Logout Spieler Bool
+             | Logout Spieler Bool  
              | Game [ Spieler ] 
              | Round [ Spieler ]
+             | Bid Wurf  
              | Game_Won_By Spieler
              | Round_Lost_By Spieler  
              | Protocol_Error_By [ Spieler ]
