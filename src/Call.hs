@@ -6,10 +6,11 @@ module Call where
 import Spieler
 import State
 
+import Control.Concurrent.STM
 import Control.Exception
 import qualified System.Timeout
 import Network.XmlRpc.Client
-
+import Control.Monad ( void )
 import Data.Typeable
 
 data ProtocolE = ProtocolE Spieler deriving ( Show, Typeable )
@@ -37,6 +38,7 @@ logged0 server s cmd = do
     message server $ RPC_Call s cmd    
     handle ( \ ( e :: SomeException ) -> do
                 message server $ RPC_Error $ show e
+                add_offender server s
                 throwIO $ ProtocolE s ) 
          $ timed timeout
          $ remote c cmd 
@@ -46,8 +48,16 @@ logged1 server s cmd arg = do
     let Callback c = callback s
     handle ( \ ( e :: SomeException ) -> do
                 message server $ RPC_Error $ show e
+                add_offender server s
                 throwIO $ ProtocolE s ) 
          $ timed timeout 
          $ remote c cmd arg
+
+add_offender server s = atomically $ do
+    os <- readTVar $ offenders server
+    writeTVar ( offenders server ) $ s : os
+
+ignore_errors server action = 
+    handle ( \ ( SomeException e ) -> return () ) ( void action ) 
 
 

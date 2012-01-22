@@ -10,7 +10,6 @@ import Wurf
 import State
 import Bank
 import Registrar
-import Void
 import Call
 
 import qualified Data.Map as M
@@ -135,7 +134,7 @@ continue_round server (s : ss) (echt, ansage) = do
   
     threadDelay $ 10^6
   
-    forM ss $ \ s' -> logged1 server s' "Player.other" ansage :: IO ()
+    forM ss $ \ s' -> ( logged1 server s' "Player.other" ansage :: IO Bool )
     a <- logged1 server s "Player.accept" ansage
     if a 
        then do -- weiterspielen
@@ -151,13 +150,6 @@ continue_round server (s : ss) (echt, ansage) = do
 
 --------------------------------------------------------------------
 
-ignore_errors server action = 
-    catch ( void action ) $ \ ( ProtocolE s ) -> do
-        hPutStrLn stderr $ unwords [ "offender", show $ name s ]
-        atomically $ do
-            os <- readTVar $ offenders server
-            writeTVar ( offenders server ) $ s : os
-        return ()    
             
 
 
