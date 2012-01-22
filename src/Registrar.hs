@@ -47,15 +47,7 @@ login state s = do
     not_logged_in <- atomically $ do 
               m <- readTVar $ registry state
               return $ not $ M.member ( name s ) m
-    callback_match <- Control.Exception.handle 
-       ( \ ( ProtocolE s ) -> return False ) $ do
-           res <- logged0 state s "Player.who_are_you"
-           if name s == res
-           then return True
-           else do
-               message state $ Callback_Mismatch s res
-               return False
-    let ok = not_logged_in && callback_match
+    let ok = not_logged_in          
     when ok $ atomically $ do   
         m <- readTVar $ registry state
         writeTVar ( registry state ) 

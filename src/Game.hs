@@ -40,6 +40,7 @@ game server = void $ do
     Control.Exception.catch ( do 
                                  
         message server $ Game xs
+        verify_callbacks server xs
         winner <- play_game server xs 
         message server $ Game_Won_By winner
         
@@ -85,7 +86,14 @@ permute xs = do
     rest <- permute $ pre ++ post
     return $ this : rest
             
-----------------------------------------------------------------------
+------------------------------------------------------
+
+verify_callbacks :: Server -> [ Spieler ] -> IO ()
+verify_callbacks server xs = forM_ xs $ \ x -> do
+    res <- logged0 server x "Player.who_are_you"
+    when ( name x /= res ) $ do
+        message server $ Callback_Mismatch x res
+        throwIO $ ProtocolE x
 
 -- | Resultat: der Gewinner (alle anderen sind raus)
 play_game :: Server -> [ Spieler ] -> IO Spieler
