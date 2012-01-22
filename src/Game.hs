@@ -162,7 +162,9 @@ logged0 s cmd = do
 
 logged1 s cmd arg = do
     let Callback c = callback s
-    res <- handle ( \ ( e :: SomeException ) -> throwIO $ ProtocolE s ) 
+    res <- handle ( \ ( e :: SomeException ) -> do
+             hPutStrLn stderr $ show e          
+             throwIO $ ProtocolE s ) 
          $ timed timeout $ remote c cmd arg
     when logging $ hPutStrLn stderr 
          $ unwords [ cmd, show $ name s, show arg, "=>", show res ]

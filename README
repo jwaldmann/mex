@@ -13,10 +13,10 @@ mex-server 2012 passwd &
 
 # start one client,  arguments: 
 # user name, password, client port, server URL
-mex-client A A 3000 http://localhost:2012/rpc &
+mex-client A A http://localhost:3000 http://localhost:2012/rpc &
 
 # start another client (use different name and port)
-mex-client B B 3001 http://localhost:2012/rpc &
+mex-client B B http://localhost:3001 http://localhost:2012/rpc &
 
 # then the server will start games.
 # watch system state at  http://localhost:2012/log

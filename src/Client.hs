@@ -24,17 +24,18 @@ import Control.Concurrent.STM
 import Control.Concurrent
 
 main  = do
-    [ n, p, port , server ] <- getArgs
+    [ n, p, client , server ] <- getArgs
     prev <- atomically $ newTVar Nothing
     forkIO $ do
         threadDelay $ 10^6
         True <- remote server "Server.login" $ Spieler 
               { name = Name n
               , password = Password p
-              , callback = Callback $ "http://localhost:" ++ port
+              , callback = Callback client
               } 
         return ()
-    play ( read port ) prev
+    let extract_port = reverse . takeWhile (/= ':') . reverse    
+    play ( read $ extract_port client ) prev
     
 play port prev 
      = Network.Wai.Handler.Warp.runSettings 
