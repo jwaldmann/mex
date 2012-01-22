@@ -41,6 +41,8 @@ game server = void $ do
                                  
         message server $ Game xs
         verify_callbacks server xs
+        break_on_offense server
+        
         winner <- play_game server xs 
         message server $ Game_Won_By winner
         
@@ -89,11 +91,18 @@ permute xs = do
 ------------------------------------------------------
 
 verify_callbacks :: Server -> [ Spieler ] -> IO ()
-verify_callbacks server xs = forM_ xs $ \ x -> do
-    res <- logged0 server x "Player.who_are_you"
-    when ( name x /= res ) $ do
-        message server $ Callback_Mismatch x res
-        throwIO $ ProtocolE x
+verify_callbacks server xs = forM_ xs $ \ x -> 
+    ignore_errors server $ do
+        res <- logged0 server x "Player.who_are_you"
+        when ( name x /= res ) $ do
+            message server $ Callback_Mismatch x res
+            throwIO $ ProtocolE x
+
+break_on_offense :: Server -> IO ()
+break_on_offense server = do
+    os <- atomically $ readTVar $ offenders server
+    when ( not $ null os ) 
+         $ throwIO $ ProtocolE ( head os )
 
 -- | Resultat: der Gewinner (alle anderen sind raus)
 play_game :: Server -> [ Spieler ] -> IO Spieler
