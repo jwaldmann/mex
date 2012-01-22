@@ -66,9 +66,9 @@ play state
 server state = methods 
     [ ("Player.who_are_you", fun $ who_are_you state )
     , ("Player.begin_round", fun $ begin state )
-    , ("Player.end_round", fun $ end state )
-    , ("Player.begin_game", fun $ begin state )
-    , ("Player.end_game", fun $ end state )
+    , ("Player.end_round", fun $ ignore state )
+    , ("Player.begin_game", fun $ ignore state )
+    , ("Player.end_game", fun $ ignore state )
     , ("Player.accept", fun $ accept state )
     , ("Player.other", fun $ ignore state )
     , ("Player.say", fun $ say state ) 
@@ -77,16 +77,13 @@ server state = methods
 who_are_you :: State -> IO Name
 who_are_you s = return $ Main.name s
 
-begin :: State -> IO ()
+begin :: State -> IO Bool
 begin s = do
    atomically $ writeTVar ( previous s ) Nothing
+   return True
 
-end :: State -> IO ()
-end s = do
-   atomically $ writeTVar ( previous s ) Nothing
-
-ignore :: State -> Wurf -> IO ()
-ignore s w = return ()
+ignore :: State -> Wurf -> IO Bool
+ignore s w = return True
 
 accept :: State -> Wurf -> IO Bool
 accept s w = do
