@@ -44,14 +44,13 @@ password_check passwd_map action s = do
     
 login :: Server -> Spieler -> IO Bool
 login state s = do  
-    not_logged_in <- atomically $ do 
-              m <- readTVar $ registry state
-              return $ not $ M.member ( name s ) m
-    let ok = not_logged_in          
-    when ok $ atomically $ do   
+    ok <- atomically $ do 
         m <- readTVar $ registry state
-        writeTVar ( registry state ) 
+        let ok = not $ M.member ( name s ) m
+        when ok $ do
+            writeTVar ( registry state ) 
                   $ M.insert ( name s ) s m
+        return ok      
     message state $ Login s ok
     return ok
 
@@ -59,12 +58,10 @@ logout :: Server -> Spieler -> IO Bool
 logout state s = do  
     ok <- atomically $ do 
               m <- readTVar $ registry state
-              let logged_in = M.member ( name s ) m
-              if  logged_in
-              then do   
+              let ok =  M.member ( name s ) m
+              when ok $ do   
                       writeTVar ( registry state ) $ M.delete ( name s ) m
-                      return True
-              else return False
+              return ok
     message state $ Logout s ok
     return ok
 
