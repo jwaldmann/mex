@@ -27,6 +27,7 @@ import qualified System.Timeout
 
 import Network.XmlRpc.Client
 
+import Data.Acid ( update )
 
 
 -- | choose a subset of players (with at least two)
@@ -44,29 +45,23 @@ game server = void $ do
         winner <- play_game server xs 
         message server $ Game_Won_By winner
         
-        atomically $ do            
-            m <- readTVar $ bank server
-            let m' = foldr Bank.update m
-                   $ (name winner, 0, 1 ) 
-                   : zip3 (map name xs) 
-                          (repeat 1) (repeat 0)
-            writeTVar ( bank server ) m'
+        update ( bank server ) $ Updates
+            $ (name winner, 0, 1 ) 
+            : zip3 (map name xs) (repeat 1) (repeat 0) 
+            
       ) $ \ ( e :: SomeException ) -> do
         os <- atomically $ do 
             os <- readTVar $ offenders server
-            m <- readTVar $ bank server
-            let m' = foldr Bank.update m
-                   $ zip3 (map name os) 
-                          (repeat 0) (repeat $ negate 1 )
-            writeTVar ( bank server ) m'       
             writeTVar ( offenders server ) []
-            
             r <- readTVar $ registry server
             writeTVar ( registry server ) 
                 $ M.difference r
                 $ M.fromList $ zip (map name os) 
                              $ repeat ()
             return os    
+        update ( bank server ) $ Updates
+            $ zip3 (map name os) 
+                   (repeat 0) (repeat $ negate 1 )
         message server $ Protocol_Error_By os
 
 select_players server = do

@@ -1,14 +1,21 @@
 {-# language PatternSignatures #-}
 {-# language GeneralizedNewtypeDeriving #-}
+{-# language TemplateHaskell #-}
 
 module Spieler where
 
 import Network.XmlRpc.Internals
 import Control.Monad.Error
 
+import Data.SafeCopy
+
 newtype Name = Name String deriving ( Eq, Ord, Show, Read, XmlRpcType )
 newtype Password = Password String deriving ( Eq, Ord, Show, Read, XmlRpcType )
 newtype Callback = Callback String deriving ( Eq, Ord, Show, XmlRpcType )
+
+$(deriveSafeCopy 0 'base ''Name)
+$(deriveSafeCopy 0 'base ''Password)
+$(deriveSafeCopy 0 'base ''Callback)
 
 data Spieler = Spieler 
                { name :: Name

@@ -4,6 +4,7 @@ import Spieler
 import Wurf
 import Bank
 
+import Data.Acid
 import Control.Concurrent.STM
 import Data.Time
 import qualified Data.Map as M
@@ -26,7 +27,7 @@ data Message = Login Spieler Bool
 type Registry = M.Map Name Spieler
 
 data Server = Server { registry  :: TVar Registry
-                 , bank      :: TVar Bank
+                 , bank      :: AcidState Bank
                  , messages :: TVar [ ( UTCTime,  Message ) ] 
                  , offenders :: TVar [ Spieler ]  
                  }
@@ -48,11 +49,13 @@ message s m = do
     print ( t, m )    
 
 make = do 
+  
+    acid <- openLocalState $ Bank.empty
+
     re <- atomically $ newTVar M.empty
-    ba <- atomically $ newTVar Bank.empty
     os <- atomically $ newTVar []
     ms <- atomically $ newTVar []
-    return $ Server { registry = re, bank = ba 
+    return $ Server { registry = re, bank = acid
                         , offenders = os , messages = ms
                         }
     

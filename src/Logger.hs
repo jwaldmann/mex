@@ -14,10 +14,11 @@ import qualified Data.ByteString.Lazy.Char8 as C
 import Data.DateTime
 import Text.PrettyPrint.HughesPJ
 import Control.Concurrent.STM
+import Data.Acid ( query )
 
 logger state = \ req -> do
      t <- liftIO $ getCurrentTime
-     b <- liftIO $ atomically $ readTVar $ bank state
+     b <- liftIO $ query ( bank state ) Snapshot
      r <- liftIO $ atomically $ readTVar $ registry state
      ms <- liftIO $ atomically $ readTVar $ messages state
      let dash = text $ replicate 50 '-'
