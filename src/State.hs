@@ -51,11 +51,13 @@ message s m = do
 make = do 
   
     acid <- openLocalState $ Bank.empty
+    createCheckpoint acid
 
     re <- atomically $ newTVar M.empty
     os <- atomically $ newTVar []
     ms <- atomically $ newTVar []
+    
     return $ Server { registry = re, bank = acid
-                        , offenders = os , messages = ms
-                        }
+                    , offenders = os , messages = ms
+                    }
     
