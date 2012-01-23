@@ -49,7 +49,7 @@ message s m = do
 
 make = do 
     re <- atomically $ newTVar M.empty
-    ba <- atomically $ newTVar M.empty
+    ba <- atomically $ newTVar Bank.empty
     os <- atomically $ newTVar []
     ms <- atomically $ newTVar []
     return $ Server { registry = re, bank = ba 

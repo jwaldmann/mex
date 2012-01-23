@@ -12,15 +12,19 @@ data Konto = Konto { played :: Int, points :: Int } deriving ( Eq, Show )
 instance Num Konto where 
     k + i = Konto { played = played k + played i , points = points k + points i }
 
-type Bank = M.Map Name Konto
+newtype Bank = Bank ( M.Map Name Konto )
+
+empty :: Bank
+empty = Bank M.empty
 
 update :: (Name, Int, Int) -> Bank -> Bank
-update (n, pl, pt) previous = 
-      M.insertWith (+) n ( Konto { played = pl, points = pt } )
+update (n, pl, pt) ( Bank previous ) = 
+      Bank
+    $ M.insertWith (+) n ( Konto { played = pl, points = pt } )
     $ previous
 
 pretty :: Bank -> Doc
-pretty b = text "statistics:" <+> vcat 
+pretty (Bank b) = text "statistics:" <+> vcat 
     ( map ( text . show ) 
     $ sortBy ( comparing ( points . snd ) ) 
     $ M.toList b 
