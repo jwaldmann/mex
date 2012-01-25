@@ -44,7 +44,10 @@ game server = void $ do
         
         winner <- play_game server xs 
         message server $ Game_Won_By winner
-        
+                
+        ( forM xs $ \ y -> ignore_errors server 
+                           ( logged1 server y "Player.game_won_by" ( name winner ) :: IO Bool ) )
+
         update ( bank server ) $ Updates
             $ (name winner, 0, 1 ) 
             : zip3 (map name xs) (repeat 1) (repeat 0) 
@@ -116,6 +119,8 @@ play_round server (s : ss) = bracket_
         w' <- logged1 server s "Player.say" w
         (loser, rest) <- continue_round server (ss ++ [s]) (w, w')
         message server $ Round_Lost_By loser
+        ( forM (s:ss) $ \ y -> ignore_errors server 
+                           ( logged1 server y "Player.round_lost_by" ( name loser ) :: IO Bool ) )
         return (loser, rest)
     
 continue_round server (s : ss) (echt, ansage) = do    

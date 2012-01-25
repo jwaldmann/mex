@@ -71,6 +71,8 @@ server state = methods
     , ("Player.accept", fun $ accept state )
     , ("Player.other", fun $ ignore1 state )
     , ("Player.say", fun $ say state ) 
+    , ("Player.game_won_by", fun (( \ s -> return True ) :: Name -> IO Bool ))
+    , ("Player.round_lost_by", fun (( \ s -> return True ) :: Name -> IO Bool ))
     ]
     
 who_are_you :: State -> IO Name
