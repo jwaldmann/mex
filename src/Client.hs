@@ -55,7 +55,7 @@ main  = do
     state <- fresh ( Name n ) 
                  ( read $ extract_port client )     
     
-    when False $ play state
+    play state
     
     
     
