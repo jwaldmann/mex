@@ -71,6 +71,6 @@ $(makeAcidic ''Bank [ 'updates, 'snapshot ])
   
 pretty (Bank b) = text "statistics:" <+> vcat 
         ( map ( text . show ) 
-        $ sortBy ( comparing ( points . snd ) ) 
+        $ sortBy ( comparing ( negate . rating . snd ) ) 
         $ M.toList b 
         )
