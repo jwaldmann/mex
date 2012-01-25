@@ -38,26 +38,26 @@ fresh n p = do
 -- the port number for this player's server
 -- is extracted from the callback URL
 main  = do
-    [ n, p, client , server ] <- getArgs
+    args @ [ n, p, client , server ] <- getArgs
+    putStrLn $ show $ "client" : args
+    
     forkIO $ do
         threadDelay $ 10^6
+        
+        score <- remote server "Server.scores" :: IO Bank
+        print score
+
         True <- remote server "Server.login" $ Spieler 
               { Spieler.name = Name n
               , password = Password p
               , callback = Callback client
               } 
         return ()
-        
-    score <- remote server "Server.scores" :: IO Bank
-    print score
-        
+    
     let extract_port = reverse . takeWhile (/= ':') . reverse    
     state <- fresh ( Name n ) 
-                 ( read $ extract_port client )     
-    
+                 ( read $ extract_port client )         
     play state
-    
-    
     
 play state
      = Network.Wai.Handler.Warp.runSettings 
