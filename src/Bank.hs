@@ -28,10 +28,6 @@ data Konto = Konto { rating :: Double
                    } 
            deriving ( Show )
 
-blank = Konto { played = 0, points = 0
-             , protocol_errors = 0
-             , rating = 1000.0
-             }           
 
 $(deriveSafeCopy 0 'base ''Konto)
   
