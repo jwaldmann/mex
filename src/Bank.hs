@@ -21,17 +21,22 @@ import Control.Monad.Reader
 import Network.XmlRpc.THDeriveXmlRpcType
 import Network.XmlRpc.Internals
 
-data Konto = Konto { played :: Int, points :: Int } 
-           deriving ( Eq, Show )
+data Konto = Konto { rating :: Double  
+                   , played :: Int
+                   , points :: Int 
+                   , protocol_errors :: Int  
+                   } 
+           deriving ( Show )
+
+blank = Konto { played = 0, points = 0
+             , protocol_errors = 0
+             , rating = 1000.0
+             }           
 
 $(deriveSafeCopy 0 'base ''Konto)
   
 $(asXmlRpcStruct ''Konto)  
   
-instance Num Konto where 
-    k + i = Konto { played = played k + played i 
-                  , points = points k + points i 
-                  }
 
 newtype Bank = Bank ( M.Map Name Konto ) 
              deriving ( Typeable, Show )
@@ -56,16 +61,12 @@ instance XmlRpcType Bank where
 empty :: Bank
 empty = Bank M.empty
 
-        
-updates :: [(Name, Int, Int)] -> Update Bank ()
-updates ts = do
+-- | write the key-value-pairs into the bank,
+-- replacing previous values associated to these keys
+updates :: M.Map Name Konto -> Update Bank ()
+updates m = do
     Bank previous <- get
-    put $ Bank
-        $ M.unionWith (+) previous
-        $ M.fromListWith (+)
-        $ map ( \ (n,pl,pt) -> 
-               (n, Konto { played = pl, points = pt }))
-        $ ts
+    put $ Bank $ M.union m previous
 
 snapshot :: Query Bank Bank
 snapshot = ask

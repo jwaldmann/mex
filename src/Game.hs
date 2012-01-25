@@ -11,6 +11,7 @@ import State
 import Bank
 import Registrar
 import Call
+import Rating
 
 import qualified Data.Map as M
 import Data.Typeable
@@ -48,25 +49,9 @@ game server = void $ do
         ( forM xs $ \ y -> ignore_errors server 
                            ( logged1 server y "Player.game_won_by" ( name winner ) :: IO Bool ) )
 
-        let points_for_winner = length xs - 1
-        update ( bank server ) $ Updates
-            $ (name winner, 0, points_for_winner ) 
-            : zip3 (map name xs) (repeat 1) (repeat 0) 
-            
+        process_regular_game_result server xs winner 
       ) $ \ ( e :: SomeException ) -> do
-        os <- atomically $ do 
-            os <- readTVar $ offenders server
-            writeTVar ( offenders server ) []
-            r <- readTVar $ registry server
-            writeTVar ( registry server ) 
-                $ M.difference r
-                $ M.fromList $ zip (map name os) 
-                             $ repeat ()
-            return os    
-        update ( bank server ) $ Updates
-            $ zip3 (map name os) 
-                   (repeat 0) (repeat $ negate 1 )
-        message server $ Protocol_Error_By os
+        process_offenses server 
 
 select_players server = do
     xs <- atomically $ do

@@ -12,6 +12,7 @@ import qualified System.Timeout
 import Network.XmlRpc.Client
 import Control.Monad ( void )
 import Data.Typeable
+import qualified Data.Set as S
 
 data ProtocolE = ProtocolE Spieler deriving ( Show, Typeable )
 instance Exception ProtocolE
@@ -55,7 +56,7 @@ logged1 server s cmd arg = do
 
 add_offender server s = atomically $ do
     os <- readTVar $ offenders server
-    writeTVar ( offenders server ) $ s : os
+    writeTVar ( offenders server ) $ S.insert s os
 
 ignore_errors server action = 
     handle ( \ ( SomeException e ) -> return () ) ( void action ) 

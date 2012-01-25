@@ -8,6 +8,7 @@ import Data.Acid
 import Control.Concurrent.STM
 import Data.Time
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Text.PrettyPrint.HughesPJ
 
 data Message = Login Spieler Bool 
@@ -29,7 +30,7 @@ type Registry = M.Map Name Spieler
 data Server = Server { registry  :: TVar Registry
                  , bank      :: AcidState Bank
                  , messages :: TVar [ ( UTCTime,  Message ) ] 
-                 , offenders :: TVar [ Spieler ]  
+                 , offenders :: TVar ( S.Set Spieler )
                  }
 
 pretty :: [ (UTCTime, Message) ] -> Doc
@@ -54,10 +55,11 @@ make = do
     createCheckpoint acid
 
     re <- atomically $ newTVar M.empty
-    os <- atomically $ newTVar []
+    os <- atomically $ newTVar S.empty
     ms <- atomically $ newTVar []
     
     return $ Server { registry = re, bank = acid
                     , offenders = os , messages = ms
                     }
+    
     
