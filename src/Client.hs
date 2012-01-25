@@ -4,6 +4,7 @@ module Main where
 
 import Wurf
 import Spieler
+import Bank
 
 import Network.Wai.Handler.Warp
 import qualified Network.Wai.Frontend.MonadCGI
@@ -46,10 +47,17 @@ main  = do
               , callback = Callback client
               } 
         return ()
+        
+    score <- remote server "Server.scores" :: IO Bank
+    print score
+        
     let extract_port = reverse . takeWhile (/= ':') . reverse    
     state <- fresh ( Name n ) 
                  ( read $ extract_port client )     
-    play state
+    
+    when False $ play state
+    
+    
     
 play state
      = Network.Wai.Handler.Warp.runSettings 

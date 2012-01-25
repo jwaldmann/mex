@@ -1,6 +1,7 @@
 {-# language DeriveDataTypeable, TemplateHaskell #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
+{-# language ScopedTypeVariables #-}
 
 module Bank where
 
@@ -33,17 +34,24 @@ instance Num Konto where
                   }
 
 newtype Bank = Bank ( M.Map Name Konto ) 
-             deriving Typeable
+             deriving ( Typeable, Show )
 
 $(deriveSafeCopy 0 'base ''Bank)
 
 instance ( XmlRpcType v ) => XmlRpcType ( M.Map String v ) where
   getType _ = TStruct
   toValue m = ValueStruct $ M.toList $ M.map toValue m
-  
+  fromValue v = case v of  
+      ValueStruct kvs -> do
+          pairs <- forM kvs $ \ (k,v) -> 
+              do w <- fromValue v ; return ( k, w )
+          return $ M.fromList pairs 
+                                            
+
 instance XmlRpcType Bank where
   getType _ = TStruct
   toValue ( Bank m ) = toValue $ M.mapKeys show m
+  fromValue v = do m <- fromValue v ; return $ Bank $ M.mapKeys Name m
 
 empty :: Bank
 empty = Bank M.empty
