@@ -48,8 +48,9 @@ game server = void $ do
         ( forM xs $ \ y -> ignore_errors server 
                            ( logged1 server y "Player.game_won_by" ( name winner ) :: IO Bool ) )
 
+        let points_for_winner = length xs - 1
         update ( bank server ) $ Updates
-            $ (name winner, 0, 1 ) 
+            $ (name winner, 0, points_for_winner ) 
             : zip3 (map name xs) (repeat 1) (repeat 0) 
             
       ) $ \ ( e :: SomeException ) -> do

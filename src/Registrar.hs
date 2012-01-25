@@ -4,6 +4,7 @@ module Registrar where
 
 import Spieler
 import State
+import Bank 
 import Call
 
 import qualified Network.Wai.Frontend.MonadCGI
@@ -18,6 +19,7 @@ import System.IO
 import qualified Data.Map as M
 import Data.Time
 import Text.PrettyPrint.HughesPJ
+import Data.Acid ( query )
 
 pretty :: Registry -> Doc
 pretty reg = text "currently logged in:" <+> vcat (
@@ -33,6 +35,7 @@ registrar passwd_map state =
 server passwd_map state = methods 
     [ ("Server.login", fun $ password_check passwd_map $ login state )
     , ("Server.logout", fun $ password_check passwd_map $ logout state ) 
+    , ("Server.scores", fun $ scores state )
     ]
     
 password_check :: M.Map Name Password
@@ -65,6 +68,8 @@ logout state s = do
     message state $ Logout s ok
     return ok
 
+scores :: Server -> IO Bank
+scores state = query ( bank state ) Snapshot
     
 
 
