@@ -3,6 +3,7 @@ module State where
 import Spieler
 import Wurf
 import Bank
+import Chart
 
 import Data.Acid
 import Control.Concurrent.STM
@@ -29,6 +30,7 @@ data Message = Login Spieler Bool
              | RPC_Call Spieler String
              | RPC_Return_OK
              | RPC_Error String
+             | Rating_Snapshot
     deriving Show               
 
 is_game_message m = case m of
@@ -45,7 +47,7 @@ data Server = Server { registry  :: TVar Registry
                  , bank      :: AcidState Bank
                  , messages :: TVar [ ( UTCTime,  Message ) ] 
                  , offenders :: TVar ( S.Set Spieler )
-                 , last_total :: TVar Int
+                 , chart :: AcidState Chart
                  }
 
 pretty :: [ (UTCTime, Message) ] -> Doc
@@ -79,19 +81,19 @@ message s m = do
 
 make = do 
   
-    acid <- openLocalState $ Bank.empty
-    createCheckpoint acid
+    bank_state <- openLocalState $ Bank.empty
+    createCheckpoint bank_state
+
+    chart_state <- openLocalState $ Chart.empty
+    createCheckpoint chart_state
 
     re <- atomically $ newTVar M.empty
     os <- atomically $ newTVar S.empty
     ms <- atomically $ newTVar []
     
-    b <- query acid Snapshot
-    lt <- atomically $ newTVar $ total b
-
-    return $ Server { registry = re, bank = acid
+    return $ Server { registry = re, bank = bank_state
                     , offenders = os , messages = ms
-                    , last_total = lt
+                    , chart = chart_state
                     }
     
     

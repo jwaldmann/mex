@@ -23,7 +23,8 @@ Executable mex-server
     haxr >= 3000.8.4, cgi >= 3001.1.8.2,
     wai>=1.0.0, http-types>= 0.6.8, warp >= 1.0.0,
     wai-frontend-monadcgi>=0.2.0,
-    acid-state>=0.6.3, safecopy>=0.6.1
+    acid-state>=0.6.3, safecopy>=0.6.1,
+    Chart>=0.15, data-accessor, colour
   
 Executable mex-client
   Hs-source-dirs : src
