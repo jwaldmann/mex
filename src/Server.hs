@@ -8,6 +8,7 @@ import Bank
 import Registrar
 import Logger
 import State
+import Chart ( chart_location )
 
 import Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
@@ -22,6 +23,9 @@ import Control.Monad ( forever )
 
 import qualified Data.Map as M
 import System.Environment
+
+import qualified Data.ByteString.Lazy as LBS
+import Control.Monad.IO.Class ( liftIO )
 
 main = do
     hSetBuffering stderr LineBuffering
@@ -42,6 +46,10 @@ main = do
       ) $ \ req -> case pathInfo req of
       [ "rpc" ] -> registrar passwd_map server req
       [ "log" ] -> logger server req
+      [ "chart" ] -> do
+            s <- liftIO $ LBS.readFile chart_location
+            return 
+               $ responseLBS statusOK [("Content-Type", "image/png")] s 
       _         -> return 
             $ responseLBS statusOK [("Content-Type", "text/plain")] 
             $ "the server is here, but the service url is wrong"
