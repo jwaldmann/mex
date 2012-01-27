@@ -22,9 +22,9 @@ import Text.PrettyPrint.HughesPJ
 import Data.Acid ( query )
 
 pretty :: Registry -> Doc
-pretty reg = text "currently logged in:" <+> vcat (
-    do ( k, v ) <- M.toList reg
-       return $ text ( show k ) <+> text ( show $ callback v ) )
+pretty reg = text "currently logged in:" 
+   <+> fsep ( do ( Name k, v ) <- M.toList reg ; return $ text k )
+       
 
 registrar passwd_map state = 
     Network.Wai.Frontend.MonadCGI.cgiToApp $ do

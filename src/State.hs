@@ -6,10 +6,16 @@ import Bank
 
 import Data.Acid
 import Control.Concurrent.STM
+import Control.Monad ( guard )
 import Data.Time
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Text.PrettyPrint.HughesPJ
+
+message_queue_length = 1000
+
+protocol_messages_display_length = 50
+game_messages_display_length = 50
 
 data Message = Login Spieler Bool 
              | Callback_Mismatch Spieler Name
@@ -25,6 +31,14 @@ data Message = Login Spieler Bool
              | RPC_Error String
     deriving Show               
 
+is_game_message m = case m of
+    Game _ -> True
+    Round _ -> True
+    Bid _ -> True
+    Game_Won_By _ -> True
+    Round_Lost_By _ -> True
+    _ -> False
+
 type Registry = M.Map Name Spieler
 
 data Server = Server { registry  :: TVar Registry
@@ -34,10 +48,23 @@ data Server = Server { registry  :: TVar Registry
                  }
 
 pretty :: [ (UTCTime, Message) ] -> Doc
-pretty ums = text "most recent actions:" $$ nest 4 ( vcat $ do
-    (u, m) <- ums
-    let sized n s = s ++ replicate ( n - length s ) ' ' 
-    return $ text ( sized 60 $ show m ) <+> text ( show u )
+pretty ums = contents ums $$ protocol ums
+
+contents ums = 
+  text "most recent (game) actions:" $$ nest 4 ( vcat 
+    $ take game_messages_display_length $ do
+        (u, m) <- ums
+        guard $ is_game_message m
+        let sized n s = s ++ replicate ( n - length s ) ' ' 
+        return $ text ( sized 60 $ show m ) <+> text ( show u )
+  )  
+    
+protocol ums = 
+  text "most recent (protocol) actions:" $$ nest 4 ( vcat 
+    $ take protocol_messages_display_length $ do
+        (u, m) <- ums
+        let sized n s = s ++ replicate ( n - length s ) ' ' 
+        return $ text ( sized 60 $ show m ) <+> text ( show u )
   )  
 
 message :: Server -> Message -> IO ()
@@ -46,7 +73,7 @@ message s m = do
     atomically $ do
         let p = messages s
         ms <- readTVar p    
-        writeTVar p $ take 50 $ (t, m) : ms 
+        writeTVar p $ take message_queue_length $ (t, m) : ms 
     print ( t, m )    
 
 make = do 

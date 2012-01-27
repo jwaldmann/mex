@@ -28,7 +28,9 @@ logger state = \ req -> do
             , Bank.pretty b, dash 
             , Registrar.pretty r , dash
             , State.pretty ms , dash                       
-            , text "built with: warp, wai, conduit; see http://www.yesodweb.com/"
+            , text "built with: warp, wai ( http://www.yesodweb.com/ )"
+            , text "            acid-state (  http://acid-state.seize.it/ )"
+            , text "            haxr ( http://hackage.haskell.org/package/haxr )"
             ]
 
 
