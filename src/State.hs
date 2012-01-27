@@ -45,6 +45,7 @@ data Server = Server { registry  :: TVar Registry
                  , bank      :: AcidState Bank
                  , messages :: TVar [ ( UTCTime,  Message ) ] 
                  , offenders :: TVar ( S.Set Spieler )
+                 , last_total :: TVar Int
                  }
 
 pretty :: [ (UTCTime, Message) ] -> Doc
@@ -85,8 +86,12 @@ make = do
     os <- atomically $ newTVar S.empty
     ms <- atomically $ newTVar []
     
+    b <- query acid Snapshot
+    lt <- atomically $ newTVar $ total b
+
     return $ Server { registry = re, bank = acid
                     , offenders = os , messages = ms
+                    , last_total = lt
                     }
     
     

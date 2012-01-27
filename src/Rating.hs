@@ -6,6 +6,7 @@ import State
 
 import Data.Acid
 import Control.Concurrent.STM
+import Control.Monad ( when )
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -39,6 +40,19 @@ process_regular_game_result state players winner = do
                            , points = p + points k 
                            , rating = drift M.! name s + rating k          
                            } )           
+
+min_chart_interval = 500
+
+maybe_extend_ratings_chart state = do
+    b <- query ( bank state ) Snapshot
+    doit <- atomically $ do
+        lt <- readTVar $ last_total state
+        let doit = lt + min_chart_interval <= total b 
+        when doit $ writeTVar ( last_total state ) $ total b
+        return doit
+    when doit $ do
+        putStrLn "extend_ratings_chart"
+
         
 -- | log them out, and adjust accounts
 process_offenses :: Server -> IO ()

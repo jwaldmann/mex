@@ -68,9 +68,15 @@ snapshot :: Query Bank Bank
 snapshot = ask
 
 $(makeAcidic ''Bank [ 'updates, 'snapshot ])
+
+total :: Bank -> Int
+total (Bank b) = sum $ map points $ M.elems b
   
-pretty (Bank b) = text "statistics:" <+> vcat 
-        ( map ( text . show ) 
+pretty (Bank b) =
+    ( text "statistics, for" <+> text (show $ total $ Bank b) 
+                              <+> text "total points" )
+    $$ ( nest 3 $ vcat 
+        $ map ( text . show ) 
         $ sortBy ( comparing ( negate . rating . snd ) ) 
         $ M.toList b 
         )
