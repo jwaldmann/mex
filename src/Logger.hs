@@ -45,6 +45,8 @@ references = do
     " | libraries: "
     a "web server: warp/wai" ! href "http://www.yesodweb.com/" 
     ","
+    a "concurrency: STM" ! href "http://hackage.haskell.org/package/stm"
+    ","
     a "persistence: acid-state" ! href "http://acid-state.seize.it/" 
     ","
     a "xml rpc server/client: haxr" ! href  "http://hackage.haskell.org/package/haxr"
