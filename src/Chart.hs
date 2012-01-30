@@ -12,7 +12,7 @@ import Data.SafeCopy
 import Data.Typeable
 import Data.Acid
 import Control.Monad.State
-import Control.Monad.Reader
+import Control.Monad.Reader ( ask )
 
 import Data.Colour.Names
 import Data.Colour
@@ -52,23 +52,28 @@ names (Chart ch) = M.keys $ foldr M.union M.empty
 coloured xs = do
     let n = length xs
     (i, x) <- zip [0 .. ] xs
-    let phi :: Double
-        phi = 2 * pi * fromIntegral i / fromIntegral n
-        normed x = (1 + x) * 0.5
-        r = normed $ sin phi ; g = normed $ cos phi 
-        b = 1 - r * g
-    return ( x, sRGB r g b )
+    let t :: Double
+        t = fromIntegral i / fromIntegral (n-1)
+    return ( x, sRGB t (1-t) 0 )
+
+local t = utcToLocalTime ( read "CET" ) t
 
 curve (Chart ch) (n @ ( Spieler.Name s), c) = id
            $ plot_lines_style .> line_color ^= opaque c
            $ plot_lines_values ^= ( return $ do
                ( t, Bank.Bank b ) <- ch
                Just k <- return $ M.lookup n b
-               return ( utcToLocalTime ( read "CET" ) t, Bank.rating k )  )
-           $ plot_lines_title ^= s
+               return ( local t , Bank.rating k )  )
+           $ plot_lines_title ^= ( 
+                let Bank.Bank current = snd $ last ch
+                    Just k = M.lookup n current
+                    r = take 6 $ show $ Bank.rating k  
+                in  s ++ " (" ++ r ++ ")"
+                                 )
            $ defaultPlotLines
 
-ratings ch = layout1_title ^= "Ratings Chart"
+ratings t ch = layout1_title ^= 
+             ( "Ratings Chart " ++ "("++ show t ++ ")" )
          $ layout1_left_axis ^: laxis_override ^= axisGridHide
          $ layout1_right_axis ^: laxis_override ^= axisGridHide
          $ layout1_bottom_axis ^: laxis_override ^= axisGridHide
@@ -78,5 +83,8 @@ ratings ch = layout1_title ^= "Ratings Chart"
          $ defaultLayout1
 
 write ch = void $ do
-    renderableToPNGFile ( toRenderable $ ratings ch ) 800 600 chart_location
+    now <- getCurrentTime
+    renderableToPNGFile 
+      ( toRenderable $ ratings ( local now ) ch ) 
+      800 600 chart_location
     
