@@ -69,6 +69,9 @@ snapshot = ask
 
 $(makeAcidic ''Bank [ 'updates, 'snapshot ])
 
+
+
+
 total :: Bank -> Int
 total (Bank b) = sum $ map points $ M.elems b
   

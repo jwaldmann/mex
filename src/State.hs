@@ -31,6 +31,7 @@ data Message = Login Spieler Bool
              | RPC_Return_OK
              | RPC_Error String
              | Rating_Snapshot
+             | Taxman
     deriving Show               
 
 is_game_message m = case m of
@@ -44,6 +45,7 @@ is_game_message m = case m of
 type Registry = M.Map Name Spieler
 
 data Server = Server { registry  :: TVar Registry
+                 , bank_lock :: TVar Bool
                  , bank      :: AcidState Bank
                  , messages :: TVar [ ( UTCTime,  Message ) ] 
                  , offenders :: TVar ( S.Set Spieler )
@@ -90,8 +92,9 @@ make = do
     re <- atomically $ newTVar M.empty
     os <- atomically $ newTVar S.empty
     ms <- atomically $ newTVar []
+    lo <- atomically $ newTVar True
     
-    return $ Server { registry = re, bank = bank_state
+    return $ Server { registry = re, bank = bank_state, bank_lock = lo
                     , offenders = os , messages = ms
                     , chart = chart_state
                     }

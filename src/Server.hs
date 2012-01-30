@@ -9,6 +9,7 @@ import Registrar
 import Logger
 import State
 import Chart ( chart_location )
+import Rating ( taxman, chartman )
 
 import Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
@@ -39,6 +40,11 @@ main = do
     
     server <- State.make
     forkIO $ forever $ game server
+
+    forkIO $ forever $ do 
+        chartman server   
+        threadDelay ( 60 * 10 ^ 6 )
+        taxman server
 
     Network.Wai.Handler.Warp.runSettings 
       ( defaultSettings { settingsTimeout = 1
