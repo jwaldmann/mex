@@ -34,21 +34,23 @@ logger state = \ req -> do
          body $ do
            h3 ti
            p $ toHtml $ show t 
-           p $ references
-           p $ img ! src "/chart"
            p $ pre $ toHtml $ show $ Bank.pretty b
+           p $ img ! src "/chart"
+           p $ references
            p $ pre $ toHtml $ show $ Registrar.pretty r
            p $ pre $ toHtml $ show $ State.pretty ms
            
 references = do
+    a "source" ! href "https://github.com/jwaldmann/mex"
+    " | libraries: "
     a "web server: warp/wai" ! href "http://www.yesodweb.com/" 
-    " | "
+    ","
     a "persistence: acid-state" ! href "http://acid-state.seize.it/" 
-    " | "
+    ","
     a "xml rpc server/client: haxr" ! href  "http://hackage.haskell.org/package/haxr"
-    " | "
+    ","
     a "graph: Chart" ! href "http://hackage.haskell.org/package/Chart"
-    " | "
+    ","
     a "text: blaze-html" ! href "http://hackage.haskell.org/package/blaze-html"
 
 
