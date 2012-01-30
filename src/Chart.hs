@@ -64,12 +64,7 @@ curve (Chart ch) (n @ ( Spieler.Name s), c) = id
                ( t, Bank.Bank b ) <- ch
                Just k <- return $ M.lookup n b
                return ( local t , Bank.rating k )  )
-           $ plot_lines_title ^= ( 
-                let Bank.Bank current = snd $ last ch
-                    Just k = M.lookup n current
-                    r = take 6 $ show $ Bank.rating k  
-                in  s ++ " (" ++ r ++ ")"
-                                 )
+           $ plot_lines_title ^= s
            $ defaultPlotLines
 
 ratings t ch = layout1_title ^= 
