@@ -6,13 +6,18 @@ import Bank
 import Registrar
 import State
 
+import Prelude hiding (head, id, div)
+import Text.Blaze.Html4.Strict hiding (map)
+import Text.Blaze.Html4.Strict.Attributes hiding (title)
+import Text.Blaze.Renderer.Utf8 (renderHtml)
+
 import qualified Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
 import Network.Wai (responseLBS)
 import Control.Monad.IO.Class ( liftIO )
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.DateTime
-import Text.PrettyPrint.HughesPJ
+-- import Text.PrettyPrint.HughesPJ
 import Control.Concurrent.STM
 import Data.Acid ( query )
 
@@ -21,16 +26,29 @@ logger state = \ req -> do
      b <- liftIO $ query ( bank state ) Snapshot
      r <- liftIO $ atomically $ readTVar $ registry state
      ms <- liftIO $ atomically $ readTVar $ messages state
-     let dash = text $ replicate 50 '-'
-     return $ responseLBS statusOK [("Content-Type", "text/plain")] 
-            $ C.pack $ show $ vcat 
-            [ text $ show t , dash  
-            , Bank.pretty b, dash 
-            , Registrar.pretty r , dash
-            , State.pretty ms , dash                       
-            , text "built with: warp, wai ( http://www.yesodweb.com/ )"
-            , text "            acid-state (  http://acid-state.seize.it/ )"
-            , text "            haxr ( http://hackage.haskell.org/package/haxr )"
-            ]
+
+     return $ responseLBS statusOK [("Content-Type", "text/html")] 
+       $ renderHtml $ html $ do
+         let ti = "Projekt Softwaretechnik I WS 11/12"
+         head $ do title ti
+         body $ do
+           h3 ti
+           p $ toHtml $ show t 
+           p $ references
+           p $ img ! src "/chart"
+           p $ pre $ toHtml $ show $ Bank.pretty b
+           p $ pre $ toHtml $ show $ Registrar.pretty r
+           p $ pre $ toHtml $ show $ State.pretty ms
+           
+references = do
+    a "web server: warp/wai" ! href "http://www.yesodweb.com/" 
+    " | "
+    a "persistence: acid-state" ! href "http://acid-state.seize.it/" 
+    " | "
+    a "xml rpc server/client: haxr" ! href  "http://hackage.haskell.org/package/haxr"
+    " | "
+    a "graph: Chart" ! href "http://hackage.haskell.org/package/Chart"
+    " | "
+    a "text: blaze-html" ! href "http://hackage.haskell.org/package/blaze-html"
 
 
