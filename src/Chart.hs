@@ -54,7 +54,10 @@ coloured xs = do
     (i, x) <- zip [0 .. ] xs
     let t :: Double
         t = fromIntegral i / fromIntegral (n-1)
-    return ( x, sRGB t (1-t) 0 )
+        r = t
+        g = 1 - t
+        ( _, b ) = properFraction $ 4 * t
+    return ( x, sRGB r g b )
 
 local t = utcToLocalTime ( read "CET" ) t
 
