@@ -9,7 +9,7 @@ import Control.Monad.Error
 import System.Random
 import Test.SmallCheck
 
-newtype Augen = Augen Int deriving (Show, Eq, Ord, Num, Random)
+newtype Augen = Augen Int deriving (Show, Eq, Ord, Num, Random, Enum )
 
 instance Serial Augen where
     series d = do a <- [ 1 .. min d 6 ] ; return $ Augen a
