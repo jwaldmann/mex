@@ -9,7 +9,7 @@ import Registrar
 import Logger
 import State
 import Chart ( chart_location )
-import Rating ( taxman, chartman )
+import Rating ( taxman, taxman2, chartman )
 
 import Network.Wai.Handler.Warp
 import Network.HTTP.Types (statusOK)
@@ -38,19 +38,19 @@ main = do
             l <- lines passwd ; [ n, p ] <- return $ words l 
             return ( Name n, Password p )
     
-    server <- State.make
+    server <- State.make passwd_map
     forkIO $ forever $ game server
 
     forkIO $ forever $ do 
         chartman server   
         threadDelay ( 60 * 10 ^ 6 )
-        taxman server
+        taxman2 server
 
     Network.Wai.Handler.Warp.runSettings 
       ( defaultSettings { settingsTimeout = 1
                         , settingsPort = read port } 
       ) $ \ req -> case pathInfo req of
-      [ "rpc" ] -> registrar passwd_map server req
+      [ "rpc" ] -> registrar server req
       [ "log" ] -> logger server req
       [ "chart" ] -> do
             s <- liftIO $ LBS.readFile chart_location

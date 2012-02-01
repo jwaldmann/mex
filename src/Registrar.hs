@@ -26,13 +26,15 @@ pretty reg = text "currently logged in:"
    <+> fsep ( do ( Name k, v ) <- M.toList reg ; return $ text k )
        
 
-registrar passwd_map state = 
+registrar state = 
     Network.Wai.Frontend.MonadCGI.cgiToApp $ do
          input <- getBody
-         result <- liftIO $ handleCall ( server passwd_map state ) input
+         result <- liftIO $ handleCall ( server state ) input
          outputFPS result
 
-server passwd_map state = methods 
+server state = 
+  let passwd_map = passwords state 
+  in  methods 
     [ ("Server.login", fun $ password_check passwd_map $ login state )
     , ("Server.logout", fun $ password_check passwd_map $ logout state ) 
     , ("Server.scores", fun $ scores state )

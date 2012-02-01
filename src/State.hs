@@ -31,7 +31,7 @@ data Message = Login Spieler Bool
              | RPC_Return_OK
              | RPC_Error String
              | Rating_Snapshot
-             | Taxman
+             | Taxman 
     deriving Show               
 
 is_game_message m = case m of
@@ -45,6 +45,7 @@ is_game_message m = case m of
 type Registry = M.Map Name Spieler
 
 data Server = Server { registry  :: TVar Registry
+                 , passwords :: M.Map Name Password      
                  , bank_lock :: TVar Bool
                  , bank      :: AcidState Bank
                  , messages :: TVar [ ( UTCTime,  Message ) ] 
@@ -81,7 +82,7 @@ message s m = do
         writeTVar p $ take message_queue_length $ (t, m) : ms 
     print ( t, m )    
 
-make = do 
+make passwd_map = do 
   
     bank_state <- openLocalState $ Bank.empty
     createCheckpoint bank_state
@@ -94,7 +95,8 @@ make = do
     ms <- atomically $ newTVar []
     lo <- atomically $ newTVar True
     
-    return $ Server { registry = re, bank = bank_state, bank_lock = lo
+    return $ Server { passwords = passwd_map
+                    , registry = re, bank = bank_state, bank_lock = lo
                     , offenders = os , messages = ms
                     , chart = chart_state
                     }

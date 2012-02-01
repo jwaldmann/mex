@@ -113,12 +113,20 @@ accept :: State -> Wurf -> IO Bool
 accept s w = do
    atomically $ writeTVar ( previous s ) $ Just w
    p <- randomRIO ( 0.0, 1.0 )
-   return $ w < wurf 2 1 && probabilities M.! w < p
+   q <- randomRIO ( 0.0, 1.0 )
+   let r = 0.5 * (p+q)
+   return $ w < wurf 2 1 && probabilities M.! w > r
    
 say :: State -> Wurf -> IO Wurf
 say s w = do
    prev <- atomically $ readTVar ( previous s )
-   return $ case prev of
-       Just u -> succ u
-       _ -> w
+   case prev of
+       Just u | u >= w -> some $ succ u
+       _ -> return w
 
+some u = 
+    if u == wurf 2 1 then return u
+    else do
+        f <- randomRIO ( False, True )
+        if f then return u else some $ succ u
+        
