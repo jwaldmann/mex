@@ -23,6 +23,10 @@ import Control.Monad ( when )
 import Control.Concurrent.STM
 import Control.Concurrent
 
+import qualified Data.Map as M
+import Data.List ( sort )
+import System.Random
+
 data State = State { name :: Name, port :: Int
                    , previous ::  TVar ( Maybe Wurf )  
                    }  
@@ -97,15 +101,32 @@ ignore0 s = return True
 ignore1 :: State -> Wurf -> IO Bool
 ignore1 s w = return True
 
+probabilities :: M.Map Wurf Double
+probabilities = M.fromList $ do
+    let ws = reverse $ sort $ do 
+           i <- [ 1 .. 6 ] ; j <- [ 1 .. 6 ] 
+           return $ wurf i j
+    ( w, k ) <- zip ws [ 0 .. ]
+    return ( w, k / 36 )
+
 accept :: State -> Wurf -> IO Bool
 accept s w = do
    atomically $ writeTVar ( previous s ) $ Just w
-   return $ w < wurf 6 3
+   p <- randomRIO ( 0.0, 1.0 )
+   q <- randomRIO ( 0.0, 1.0 )
+   let r = 0.5 * (p+q)
+   return $ w < wurf 2 1 && probabilities M.! w > r
    
 say :: State -> Wurf -> IO Wurf
 say s w = do
    prev <- atomically $ readTVar ( previous s )
-   return $ case prev of
-       Just u | u >= w -> succ u
-       _ -> w
+   case prev of
+       Just u | u >= w -> some $ succ u
+       _ -> return w
 
+some u = 
+    if u == wurf 2 1 then return u
+    else do
+        f <- randomRIO ( False, True )
+        if f then return u else some $ succ u
+        

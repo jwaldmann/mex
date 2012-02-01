@@ -19,7 +19,7 @@ import Data.Time
 elo_base       = 1000.0
 elo_max_adjust =   10.0
 
-taxation = 0.1 / elo_base
+taxation = 0.5 / elo_base
 
 modify :: Server -> ( Bank -> M.Map Name Konto ) -> IO ()
 modify s f = do
@@ -31,17 +31,6 @@ modify s f = do
     update ( bank s ) $ Updates $ f b
     atomically $ do writeTVar ( bank_lock s ) True
 
-asif_modify :: Server -> ( Bank -> M.Map Name Konto ) -> IO ()
-asif_modify s f = do
-    atomically $ do 
-        l <- readTVar ( bank_lock s ) 
-        check l
-        writeTVar ( bank_lock s ) False
-    b <- query ( bank s ) Bank.Snapshot
-    -- update ( bank s ) $ Updates $ f b
-    putStrLn $ show $ f b
-    atomically $ do writeTVar ( bank_lock s ) True
-
 -- | linear tax for all players that are not logged in.
 -- the total tax will be distributed evenly among all players
 -- that are logged in.
@@ -50,7 +39,7 @@ taxman2 state = do
     message state Taxman
     logged_in <- atomically $ readTVar $ registry state
     when ( not $ M.null logged_in ) 
-         $ asif_modify state $ \ ( Bank b ) -> M.fromList $ do
+         $ modify state $ \ ( Bank b ) -> M.fromList $ do
             let balance = do
                     (p, k) <- M.toList b -- all known players
                     return ( p ,
